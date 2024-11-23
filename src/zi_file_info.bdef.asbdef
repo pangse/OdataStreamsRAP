@@ -1,0 +1,44 @@
+managed implementation in class zbp_i_file_info unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZI_FILE_INFO alias file
+persistent table zrap_file_info
+lock master
+total etag end_user
+draft table zrap_file_infod
+authorization master ( instance,  global )
+etag master end_user
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly ) FileStatus, CriticalityStatus, HideExcel;
+  // Logic to convert uploaded excel into internal table and save to the child entity is written here
+  action ( features : instance ) uploadExcelData  result [1] $self;
+
+  association _ses_excel { create; with draft; }
+  // Logic to trigger action uploadExcelData
+  determination fields on modify { field Filename ; }
+  draft action Edit;
+  draft action Activate;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+}
+
+define behavior for ZI_FILE_DATA alias ExcelData
+persistent table zrap_file_data
+lock dependent by _ses_file
+draft table zrap_file_datad
+authorization dependent by _ses_file
+etag master Begdate
+{
+  update;
+  delete;
+  field ( readonly ) end_user;
+  association _ses_file { with draft; }
+  // Logic to process the uploaded data from excel
+  action downloadSES parameter za_download_filter result[1] $self;
+}

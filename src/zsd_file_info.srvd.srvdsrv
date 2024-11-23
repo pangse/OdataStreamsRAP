@@ -1,0 +1,5 @@
+@EndUserText.label: 'service definition for file'
+define service Zsd_file_info {
+  expose zc_file_info;
+  expose zc_file_data;
+}

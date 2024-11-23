@@ -1,0 +1,25 @@
+projection;
+strict ( 2 );
+use draft;
+
+define behavior for zc_file_info
+{
+  use update;
+  use delete;
+
+  field ( readonly ) status , Local_Last_Changed_At ;
+  use action Edit;
+  use action Activate;
+  use action Discard;
+  use action Resume;
+  use action Prepare;
+  use association _ses_excel { create; with draft; }
+}
+
+define behavior for zc_file_data
+{
+  use update;
+  use delete;
+  use association _ses_file { with draft; }
+  use action downloadSES;
+}
