@@ -3,8 +3,8 @@
 {
 "FROM":
 [
-"USR02",
-"ZRAP_FILE_INFO"
+"ZRAP_FILE_INFO",
+"ZUSER02"
 ],
 "ASSOCIATED":
 [

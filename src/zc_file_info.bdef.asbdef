@@ -1,5 +1,5 @@
 projection;
-strict ( 2 );
+//strict ( 2 );
 use draft;
 
 define behavior for zc_file_info
@@ -7,13 +7,21 @@ define behavior for zc_file_info
   use update;
   use delete;
 
-  field ( readonly ) status , Local_Last_Changed_At ;
+  field ( readonly ) status, Local_Last_Changed_At;
   use action Edit;
   use action Activate;
   use action Discard;
   use action Resume;
   use action Prepare;
   use association _ses_excel { create; with draft; }
+
+//  side effects
+//  {
+//
+//    field Filename affects entity _ses_excel;
+////    action uploadExcelData affects entity _ses_excel;
+//  }
+
 }
 
 define behavior for zc_file_data

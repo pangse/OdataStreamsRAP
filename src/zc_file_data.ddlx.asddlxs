@@ -6,22 +6,22 @@ annotate entity zc_file_data with
       id: 'SES',
       type: #FIELDGROUP_REFERENCE,
       purpose: #STANDARD,
-      label: 'SES',
+      label: 'PO Information',
       targetQualifier: 'SESDetails'
    }]
   @UI.lineItem: [{ position: 1 }]
   end_user;
-  @UI.lineItem: [{ position: 10 , label: 'SES Number', invocationGrouping: #ISOLATED },
-  { type: #FOR_ACTION, dataAction: 'downloadSES', label: 'Download SES Data' }]
+  @UI.lineItem: [{ position: 10 , label: 'Entry Number', invocationGrouping: #ISOLATED },
+  { type: #FOR_ACTION, dataAction: 'downloadSES', label: 'Download PO Data' }]
   @UI.fieldGroup: [{ position: 10 , label: 'SES Number', qualifier: 'SESDetails' }]
   Entrysheet;
-  @UI.lineItem: [{ position: 20 , label: 'PO' }]
-  @UI.fieldGroup: [{ position: 20 , label: 'PO', qualifier: 'SESDetails' }]
+  @UI.lineItem: [{ position: 20 , label: 'PO Number' }]
+  @UI.fieldGroup: [{ position: 20 , label: 'PO Number', qualifier: 'SESDetails' }]
   Ebeln;
   @UI.lineItem: [{ position: 30 , label: 'PO Item' }]
   @UI.fieldGroup: [{ position: 30 , label: 'PO Item', qualifier: 'SESDetails' }]
   Ebelp;
-  @UI.lineItem: [{ position: 40 , label: 'SES Name' }]
+  @UI.lineItem: [{ position: 40 , label: 'Entry Name' }]
   @UI.fieldGroup: [{ position: 40 , label: 'SES Name', qualifier: 'SESDetails' }]
   Ext_Number;
   @UI.lineItem: [{ position: 50 , label: 'Valid From' }]
@@ -33,6 +33,7 @@ annotate entity zc_file_data with
   @UI.lineItem: [{ position: 70 , label: 'Quantity' }]
   @UI.fieldGroup: [{ position: 70 , label: 'Quantity', qualifier: 'SESDetails' }]
   Quantity;
+  @UI.hidden: true
   @UI.lineItem: [{ position: 80 , label: 'UOM' }]
   @UI.fieldGroup: [{ position: 80 , label: 'UOM', qualifier: 'SESDetails' }]
   Base_Uom;

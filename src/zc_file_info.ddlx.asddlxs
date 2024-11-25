@@ -11,7 +11,7 @@ annotate entity zc_file_info with
       { label: 'Invoice Details',     id: 'Invoicedet',     type: #IDENTIFICATION_REFERENCE, position: 10,                             parentId: 'File',        purpose: #STANDARD },
       {                               id: 'Upload',         type: #FIELDGROUP_REFERENCE,     position: 20  ,targetQualifier: 'Upload', parentId: 'Attachment',  purpose: #STANDARD },
   //**----  Excel data Facet **
-      { label: 'Excel Data',          id: 'Data',           type: #LINEITEM_REFERENCE,       position: 30,  targetElement: '_ses_excel', purpose: #STANDARD } ]
+      { label: 'PO Information',          id: 'Data',           type: #LINEITEM_REFERENCE,       position: 30,  targetElement: '_ses_excel', purpose: #STANDARD } ]
 
 
   @UI: { lineItem:       [ { position: 10, importance: #HIGH , label: 'Person Responsible'}  ] ,
@@ -26,7 +26,8 @@ annotate entity zc_file_info with
   @UI: { identification: [ { position: 30 , label: 'File' } ] }
   Attachment;
 
-  @UI.hidden: true
+//  @UI.hidden: true
+  @UI: { identification: [ { position: 40 , label: 'MimeType' } ] }
   MimeType;
 
   @UI.hidden: true

@@ -7,45 +7,9 @@
      <NAME>ZSB_FILE_INFO</NAME>
      <TYPE>SRVB/SVB</TYPE>
      <DESCRIPTION>Service binding for file info</DESCRIPTION>
-     <LINKS>
-      <item>
-       <HREF>versions</HREF>
-       <REL>http://www.sap.com/adt/relations/versions</REL>
-       <TITLE>Historic versions</TITLE>
-      </item>
-      <item>
-       <HREF>/sap/bc/adt/repository/informationsystem/abaplanguageversions?uri=%2Fsap%2Fbc%2Fadt%2Fbusinessservices%2Fbindings%2Fzsb_file_info</HREF>
-       <REL>http://www.sap.com/adt/relations/informationsystem/abaplanguageversions</REL>
-       <TYPE>application/vnd.sap.adt.nameditems.v1+xml</TYPE>
-       <TITLE>Allowed ABAP language versions</TITLE>
-      </item>
-      <item>
-       <HREF>/sap/bc/adt/businessservices/odatav2/ZSB_FILE_INFO</HREF>
-       <REL>http://www.sap.com/categories/odatav2</REL>
-       <TYPE>application/vnd.sap.adt.businessservices.odatav2.v2+xml</TYPE>
-       <TITLE>ODATAV2</TITLE>
-      </item>
-      <item>
-       <HREF>/sap/bc/adt/businessservices/testclass</HREF>
-       <REL>http://www.sap.com/categories/testclass</REL>
-       <TYPE>application/vnd.sap.adt.businessservices.testclass.v1+xml</TYPE>
-       <TITLE>TESTCLASS</TITLE>
-      </item>
-      <item>
-       <HREF>/sap/bc/adt/businessservices/testclass</HREF>
-       <REL>http://www.sap.com/categories/testclass</REL>
-       <TYPE>application/vnd.sap.adt.businessservices.testclassv4.v1+xml</TYPE>
-       <TITLE>TESTCLASSV4</TITLE>
-      </item>
-      <item>
-       <HREF>/sap/bc/adt/businessservices/semanticversion</HREF>
-       <REL>http://www.sap.com/categories/semanticversion</REL>
-       <TYPE>application/vnd.sap.adt.businessservices.semanticversion.v1+xml</TYPE>
-       <TITLE>SemanticVersion</TITLE>
-      </item>
-     </LINKS>
-     <RESPONSIBLE>ASINGH51</RESPONSIBLE>
+     <LANGUAGE>EN</LANGUAGE>
      <MASTER_LANGUAGE>EN</MASTER_LANGUAGE>
+     <ABAP_LANGU_VERSION>5</ABAP_LANGU_VERSION>
     </METADATA>
     <CONTENT>
      <BIND_TYPE_IMPL>
@@ -75,6 +39,8 @@
       </item>
      </SERVICES>
     </CONTENT>
+    <CONTRACT>C1</CONTRACT>
+    <RELEASE_SUPPORTED>true</RELEASE_SUPPORTED>
     <PUBLISHED>true</PUBLISHED>
     <BINDING_CREATED>true</BINDING_CREATED>
    </SRVB>

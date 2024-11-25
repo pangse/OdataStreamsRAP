@@ -29,7 +29,7 @@ CLASS lhc_ZI_FILE_INFO IMPLEMENTATION.
 
     result = VALUE #( FOR ls_file IN lt_file ( %key = ls_file-%key
                                                %is_draft = ls_file-%is_draft
-                                               %features-%action-uploadexceldata = COND #( WHEN ls_file-%is_draft = '00'
+                                               %features-%action-uploadExcelData = COND #( WHEN ls_file-%is_draft = '00'
                                                                                            THEN if_abap_behv=>fc-f-read_only
                                                                                            ELSE if_abap_behv=>fc-f-unrestricted ) ) ).
 
@@ -39,8 +39,9 @@ CLASS lhc_ZI_FILE_INFO IMPLEMENTATION.
   METHOD uploadExcelData.
 
 ** Check if there exist an entry with current logged in username in parent table
-    SELECT @abap_true INTO @DATA(lv_valid) FROM zrap_file_info UP TO 1 ROWS WHERE end_user = @sy-uname.
-    ENDSELECT.
+    SELECT SINGLE @abap_true  FROM zrap_file_info WHERE end_user = @sy-uname
+    INTO @DATA(lv_valid).
+
 ** Create one entry, if it does not exist
     IF lv_valid <> abap_true.
       INSERT zrap_file_info FROM @( VALUE #( end_user = sy-uname ) ).
@@ -58,40 +59,91 @@ CLASS lhc_ZI_FILE_INFO IMPLEMENTATION.
 ** Data declarations
     DATA: rows          TYPE STANDARD TABLE OF string,
           content       TYPE string,
-          conv          TYPE REF TO cl_abap_conv_in_ce,
+          conv          TYPE REF TO cl_abap_conv_codepage,
           ls_excel_data TYPE zrap_file_data,
           lt_excel_data TYPE STANDARD TABLE OF zrap_file_data,
           lv_quantity   TYPE char10,
           lv_entrysheet TYPE ebeln.
 
+    TYPES: BEGIN OF po_line_type,
+             entrysheet    TYPE c LENGTH 10,
+             ebeln         TYPE ebeln,
+             ebelp         TYPE ebelp,
+             ext_number    TYPE c LENGTH 16,
+             begdate       TYPE zlzvon,
+             enddate       TYPE zlzvon,
+             quantity      TYPE zmengev,
+             fin_entry     TYPE c LENGTH 1,
+             error         TYPE abap_boolean,
+             error_message TYPE c LENGTH 100,
+           END OF po_line_type,
+           po_tab_type TYPE TABLE OF po_line_type WITH EMPTY KEY.
+    DATA po_tab TYPE po_tab_type.
+
 ** Convert excel file with CSV format into internal table of type string
-    conv = cl_abap_conv_in_ce=>create( input = lv_attachment ).
-    conv->read( IMPORTING data = content ).
+*    conv = cl_abap_conv_in_ce=>create( input = lv_attachment ).
+*    conv->read( IMPORTING data = content ).
 
-** Split the string table to rows
-    SPLIT content AT cl_abap_char_utilities=>cr_lf INTO TABLE rows.
 
-** Process the rows and append to the internal table
-    LOOP AT rows INTO DATA(ls_row).
-      SPLIT ls_row AT ',' INTO ls_excel_data-entrysheet
-                               ls_excel_data-ebeln
-                               ls_excel_data-ebelp
-                               ls_excel_data-ext_number
-                               ls_excel_data-begdate
-                               ls_excel_data-enddate
-                               lv_quantity
-                               "ls_attdata-BASE_UOM
-                               ls_excel_data-fin_entry.
+    "As a first step (for reading and writing XLSX content), getting a handle to process
+    "XLSX content, which is available as xstring.
+    DATA(xlsx_doc) = xco_cp_xlsx=>document->for_file_content( lv_attachment ).
 
-      ls_excel_data-entrysheet = lv_entrysheet = |{ ls_excel_data-entrysheet ALPHA = IN }|.
-      ls_excel_data-ebeln      = |{ ls_excel_data-ebeln ALPHA = IN }|.
-      ls_excel_data-ebelp      = |{ ls_excel_data-ebelp ALPHA = IN }|.
-      ls_excel_data-quantity = CONV #( lv_quantity ).
+    "------------------------ Read access to XLSX content ------------------------
 
-      APPEND ls_excel_data TO lt_excel_data.
+    "Getting read access
+    DATA(read_xlsx) = xlsx_doc->read_access( ).
 
-      CLEAR: ls_row, ls_excel_data.
-    ENDLOOP.
+    "Reading the first worksheet of the XLSX file
+    DATA(worksheet1) = read_xlsx->get_workbook( )->worksheet->at_position( 1 ).
+
+    "You can also specify the name of the worksheet
+    "DATA(worksheet1) = read_xlsx->get_workbook( )->worksheet->for_name( 'Sheet1' ).
+
+    "Using selection patterns
+    "The XCO XLSX module works with selection patterns that define how the content
+    "in a worksheet is selected (i.e. whether everything or a restricted set is selected).
+    "Check the documentation for further information.
+    "The following selection pattern respects all values.
+    DATA(pattern_all) = xco_cp_xlsx_selection=>pattern_builder->simple_from_to( )->get_pattern( ).
+
+    "Note that the content is written to a reference to an internal table
+    "with the write_to method.
+    worksheet1->select( pattern_all
+      )->row_stream(
+      )->operation->write_to( REF #( po_tab )
+      )->execute( ).
+
+    MOVE-CORRESPONDING po_tab TO lt_excel_data.
+
+
+*    DATA(xstring2string) = cl_abap_conv_codepage=>create_in( codepage = `UTF-8`
+*                                                                            )->convert( source = lv_attachment ).
+*
+*** Split the string table to rows
+*    SPLIT xstring2string AT cl_abap_char_utilities=>cr_lf INTO TABLE rows.
+*
+*** Process the rows and append to the internal table
+*    LOOP AT rows INTO DATA(ls_row).
+*      SPLIT ls_row AT ',' INTO ls_excel_data-entrysheet
+*                               ls_excel_data-ebeln
+*                               ls_excel_data-ebelp
+*                               ls_excel_data-ext_number
+*                               ls_excel_data-begdate
+*                               ls_excel_data-enddate
+*                               lv_quantity
+*                               "ls_attdata-BASE_UOM
+*                               ls_excel_data-fin_entry.
+*
+*      ls_excel_data-entrysheet = lv_entrysheet = |{ ls_excel_data-entrysheet ALPHA = IN }|.
+*      ls_excel_data-ebeln      = |{ ls_excel_data-ebeln ALPHA = IN }|.
+*      ls_excel_data-ebelp      = |{ ls_excel_data-ebelp ALPHA = IN }|.
+*      ls_excel_data-quantity = CONV #( lv_quantity ).
+*
+*      APPEND ls_excel_data TO lt_excel_data.
+*
+*      CLEAR: ls_row, ls_excel_data.
+*    ENDLOOP.
 
 ** Delete duplicate records
     DELETE ADJACENT DUPLICATES FROM lt_excel_data.
@@ -115,6 +167,8 @@ CLASS lhc_ZI_FILE_INFO IMPLEMENTATION.
                                                                                    quantity    = ls_data-quantity
                                                                                   " BASE_UOM    = ls_data-
                                                                                    fin_entry   = ls_data-fin_entry
+                                                                                   Error       = ls_data-error
+                                                                                   Error_Message = ls_data-error_message
                                                                                   %control = VALUE #( end_user    = if_abap_behv=>mk-on
                                                                                                       entrysheet  = if_abap_behv=>mk-on
                                                                                                       ebeln       = if_abap_behv=>mk-on
@@ -124,7 +178,9 @@ CLASS lhc_ZI_FILE_INFO IMPLEMENTATION.
                                                                                                       enddate     = if_abap_behv=>mk-on
                                                                                                       quantity    = if_abap_behv=>mk-on
                                                                                                      " BASE_UOM    = ls_data-
-                                                                                                      fin_entry   = if_abap_behv=>mk-on  ) ) ) ) ).
+                                                                                                      fin_entry   = if_abap_behv=>mk-on
+                                                                                                      Error       = if_abap_behv=>mk-on
+                                                                                                      error_message = if_abap_behv=>mk-on  ) ) ) ) ).
     READ ENTITIES OF zi_file_info IN LOCAL MODE
     ENTITY file
     BY \_ses_excel
@@ -146,7 +202,10 @@ CLASS lhc_ZI_FILE_INFO IMPLEMENTATION.
     ENTITY file
     CREATE BY \_ses_excel
     AUTO FILL CID
-    WITH lt_att_create.
+    WITH lt_att_create
+    MAPPED DATA(lt_map)
+    REPORTED DATA(lt_rep)
+    FAILED DATA(lt_fail).
 
 
     APPEND VALUE #( %tky = lt_inv[ 1 ]-%tky ) TO mapped-file.
@@ -194,8 +253,8 @@ CLASS lhc_ZI_FILE_INFO IMPLEMENTATION.
   METHOD fields.
 
 **  If entry for user not present, insert one
-    SELECT @abap_true INTO @DATA(lv_valid) FROM zrap_file_info UP TO 1 ROWS WHERE end_user = @sy-uname.
-    ENDSELECT.
+    SELECT SINGLE @abap_true  FROM zrap_file_info WHERE end_user = @sy-uname
+ INTO @DATA(lv_valid).
 
     IF lv_valid <> abap_true.
       INSERT zrap_file_info FROM @( VALUE #( end_user = sy-uname ) ).
@@ -232,11 +291,10 @@ CLASS lhc_ZI_FILE_DATA DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
 
     METHODS downloadSES FOR MODIFY
-      IMPORTING keys FOR ACTION ExcelData~downloadSES RESULT result.
+      IMPORTING keys FOR ACTION ExcelData~downloadSES.
     METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
       IMPORTING REQUEST requested_authorizations FOR ExcelData RESULT result.
-    METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
-      IMPORTING keys REQUEST requested_authorizations FOR ExcelData RESULT result.
+
 
 ENDCLASS.
 
@@ -246,22 +304,81 @@ CLASS lhc_ZI_FILE_DATA IMPLEMENTATION.
 
   METHOD downloadSES.
 
-  READ ENTITIES OF ZI_FILE_INFO IN LOCAL MODE
-         ENTITY ExcelData
-         ALL FIELDS
-         WITH CORRESPONDING #( keys )
-         RESULT DATA(lt_excel)
-         " TODO: variable is assigned but never used (ABAP cleaner)
-         FAILED DATA(lt_failed_v).
+    DATA(lv_date) = keys[ 1 ]-%param-ValidFrom.
+    DATA(lv_final) = keys[ 1 ]-%param-Final.
+    DATA(lv_error) = keys[ 1 ]-%param-error.
 
-*    DATA(write_xlsx) = xco_cp_xlsx=>document->empty( )->write_access( ).
+    DATA: lt_filedata TYPE TABLE OF zrap_file_data.
+    SELECT * FROM zrap_file_data
+    WHERE begdate ge @lv_date
+    AND fin_entry = @lv_final
+    AND error = @lv_error
+    INTO TABLE @lt_filedata.
+
+    "Creating a new XLSX document
+    DATA(write_xlsx) = xco_cp_xlsx=>document->empty( )->write_access( ).
+
+    "Note that the name of the created worksheet is Sheet1
+    "Accessing the first worksheet via the position
+    DATA(ws1) = write_xlsx->get_workbook( )->worksheet->at_position( 1 ).
+
+    "As is the case with the read access, a pattern is used.
+    "The following pattern uses the entire content.
+    DATA(pattern_all4write) = xco_cp_xlsx_selection=>pattern_builder->simple_from_to( )->get_pattern( ).
+
+    "Writing the internal table lines to the worksheet using the write_from method
+    ws1->select( pattern_all4write
+      )->row_stream(
+      )->operation->write_from( REF #( lt_filedata )
+      )->execute( ).
+
+    DATA(file_content) = write_xlsx->get_file_content( ).
+
+    IF file_content IS NOT INITIAL.
+
+      UPDATE zrap_file_info SET attachment = @file_content, filename = 'PO_DOWNLOAD.xlsx' WHERE end_user = @sy-uname.
+
+      IF sy-subrc = 0.
+
+        APPEND VALUE #(
+                     %msg = new_message_with_text( severity = if_abap_behv_message=>severity-success
+                                                   text = 'Download Successful' )
+                    ) TO reported-exceldata.
+
+      ENDIF.
+
+
+*      MODIFY ENTITIES OF zr_rap_file_info
+*      ENTITY ZrRapFileInfo
+*      CREATE AUTO FILL CID
+*      SET FIELDS WITH VALUE #( (
+*                                            EndUser = 'Download9'
+*                                            status = 'P'
+*                                            Attachment = file_content
+*                                              mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+*                                            filename = 'PO_CREATE.xlsx'
+*
+*
+*
+*
+*        )
+*
+*
+*
+*         )
+*
+*         MAPPED DATA(lt_mapped)
+*         FAILED DATA(lt_failed)
+*         REPORTED DATA(lt_reported).
+
+
+    ENDIF.
+
 
   ENDMETHOD.
 
   METHOD get_global_authorizations.
   ENDMETHOD.
 
-  METHOD get_instance_authorizations.
-  ENDMETHOD.
 
 ENDCLASS.
