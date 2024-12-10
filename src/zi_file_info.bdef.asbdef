@@ -18,14 +18,6 @@ etag master end_user
   // Logic to convert uploaded excel into internal table and save to the child entity is written here
   action ( features : instance ) uploadExcelData result [1] $self;
 
-  //  side effects
-  //  {
-  //
-  //
-  ////    determine action uploadExcelData executed on field Filename affects entity _ses_excel;
-  //    field Filename affects permissions ( action uploadExcelData );
-  //    action uploadExcelData affects $self, entity _ses_excel, messages;
-  //  }
 
   association _ses_excel { create; with draft; }
   // Logic to trigger action uploadExcelData

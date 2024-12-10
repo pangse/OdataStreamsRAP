@@ -304,13 +304,15 @@ CLASS lhc_ZI_FILE_DATA IMPLEMENTATION.
 
   METHOD downloadSES.
 
+*read filters
     DATA(lv_date) = keys[ 1 ]-%param-ValidFrom.
     DATA(lv_final) = keys[ 1 ]-%param-Final.
     DATA(lv_error) = keys[ 1 ]-%param-error.
-
     DATA: lt_filedata TYPE TABLE OF zrap_file_data.
+
+*get filtered data
     SELECT * FROM zrap_file_data
-    WHERE begdate ge @lv_date
+    WHERE begdate GE @lv_date
     AND fin_entry = @lv_final
     AND error = @lv_error
     INTO TABLE @lt_filedata.
@@ -335,41 +337,36 @@ CLASS lhc_ZI_FILE_DATA IMPLEMENTATION.
     DATA(file_content) = write_xlsx->get_file_content( ).
 
     IF file_content IS NOT INITIAL.
+"insert data to the table
+*      UPDATE zrap_file_info SET attachment = @file_content, filename = 'PO_DOWNLOAD.xlsx' WHERE end_user = @sy-uname.
+      DATA: ls_data TYPE zrap_file_info.
+      DATA: lv_created_at       TYPE tzntstmpl.
+      DATA: lv_timestamp TYPE timestamp,
+            lv_random    TYPE char12.
+      GET TIME STAMP FIELD lv_created_at.
+      GET TIME STAMP FIELD lv_timestamp.
+      lv_random = |{ lv_timestamp }|.
+      lv_random = lv_random(12).
+      ls_data-end_user = lv_random.
+      ls_data-attachment = file_content.
+      ls_data-filename = |PO_DOWNLOAD_{ lv_timestamp }.xlsx|.
+      ls_data-mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'.
+      ls_data-local_last_changed_at = lv_created_at.
+      ls_data-local_last_changed_by = sy-uname.
 
-      UPDATE zrap_file_info SET attachment = @file_content, filename = 'PO_DOWNLOAD.xlsx' WHERE end_user = @sy-uname.
+      INSERT zrap_file_info FROM @ls_data.
 
       IF sy-subrc = 0.
 
+        DATA(lv_text) = | { 'Download Successful with id' } { ls_data-end_user } |.
+
         APPEND VALUE #(
-                     %msg = new_message_with_text( severity = if_abap_behv_message=>severity-success
-                                                   text = 'Download Successful' )
+                     %msg = new_message_with_text( severity = if_abap_behv_message=>severity-information
+                                                   text = lv_text )
                     ) TO reported-exceldata.
 
       ENDIF.
 
-
-*      MODIFY ENTITIES OF zr_rap_file_info
-*      ENTITY ZrRapFileInfo
-*      CREATE AUTO FILL CID
-*      SET FIELDS WITH VALUE #( (
-*                                            EndUser = 'Download9'
-*                                            status = 'P'
-*                                            Attachment = file_content
-*                                              mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-*                                            filename = 'PO_CREATE.xlsx'
-*
-*
-*
-*
-*        )
-*
-*
-*
-*         )
-*
-*         MAPPED DATA(lt_mapped)
-*         FAILED DATA(lt_failed)
-*         REPORTED DATA(lt_reported).
 
 
     ENDIF.

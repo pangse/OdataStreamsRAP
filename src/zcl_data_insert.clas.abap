@@ -19,7 +19,7 @@ CLASS zcl_data_insert IMPLEMENTATION.
 
 *    DATA: ls_data TYPE zuser02.
 *
-*    ls_data-bname = 'Download'.
+*    ls_data-bname = 'CB9980006571'.
 *
 *    INSERT zuser02 FROM @ls_data.
 *
@@ -33,15 +33,16 @@ CLASS zcl_data_insert IMPLEMENTATION.
 
 
 
-*    DELETE FROM zrap_file_info WHERE end_user = 'Download'.
-*    DELETE FROM zrap_file_info WHERE end_user = 'Download1'.
+    DELETE FROM zrap_file_info WHERE end_user = 'CB9980001701'.
+*    DELETE FROM zrap_file_info WHERE end_user = 'CB9980001701'.
 *
-*    DELETE FROM zrap_file_info WHERE end_user = 'Download2'.
-    DELETE FROM zrap_file_info WHERE end_user = 'Download8'.
-        DELETE FROM zrap_file_info WHERE end_user = 'SANDRA'.
+*    DELETE FROM zrap_file_info WHERE end_user = 'CB9980001702'.
+*    DELETE FROM zrap_file_info WHERE end_user = 'CB9980001703'.
+*    DELETE FROM zrap_file_info WHERE end_user = 'CB9980001704'.
+*    DELETE FROM zrap_file_info WHERE end_user = 'CB9980001705'.
 
 
-*    DELETE FROM zuser02 WHERE bname = 'Download'.
+    DELETE FROM zuser02 WHERE bname = 'CB9980006571'.
 *    DELETE FROM zuser02 WHERE bname = 'Download1'.
 *
 *    DELETE FROM zuser02 WHERE bname = 'Download2'.
